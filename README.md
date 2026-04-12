@@ -6,6 +6,8 @@ Instead of asking a single LLM to "summarize a repo," Overwatch behaves like a s
 
 The result is a more judge-friendly and real-world-ready agent workflow centered on perception, reasoning, tool use, self-correction, and action.
 
+Primary use case: Project Overwatch helps developers, startups, platform teams, and security-minded engineering teams track critical changes in fast-moving AI and developer-tool ecosystems automatically.
+
 ## Why This Matters
 
 Modern engineering teams cannot manually keep up with every meaningful change across fast-moving repos, releases, SDKs, and ecosystem chatter. Project Overwatch turns that noisy stream into a structured, evidence-grounded intelligence brief.
@@ -182,6 +184,20 @@ Successful runs generate:
 - `output/alert_fallback.md` when Slack delivery fails
 
 These outputs are runtime artifacts and are not tracked in Git.
+
+## Example Output Snapshot
+
+Representative result from a recent run against `openai/openai-python`:
+
+- Summary: The system detected support for short-lived tokens in the client layer, a `_version.py` update, and accompanying release-note changes.
+- Confidence: `0.90`
+- Requires retry: `false`
+- Strong evidence:
+  - commit URL for the short-lived token change
+  - commit URL for the `_version.py` update
+  - changelog URL tied to the same release window
+
+A checked-in example summary is available in [EXAMPLE_REPORT.md](/C:/Agentathon/EXAMPLE_REPORT.md).
 
 ## What Makes It Reliable
 

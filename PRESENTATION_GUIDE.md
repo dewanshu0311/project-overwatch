@@ -4,6 +4,10 @@
 
 Project Overwatch is an autonomous AI analyst team that watches GitHub repositories, gathers supporting signals, challenges its own claims, and produces a verified competitive-intelligence report.
 
+Best instant value statement:
+
+It helps developers, startups, and engineering teams track critical changes in fast-moving AI and developer-tool ecosystems automatically.
+
 ## 1-Minute Pitch
 
 Project Overwatch is a multi-agent competitive-intelligence system built for Agentathon 2026. Instead of asking one LLM to summarize a repo, it runs a six-stage workflow: it detects current changes, gathers ecosystem context, researches supporting evidence, writes an intelligence brief, red-teams that brief, and then verifies the final report before shipping it. We also added self-correction, API key rotation, validated memory, a live dashboard, and HTML report export. The result is an agent system that does not just talk about software changes, it investigates them, challenges them, and produces a deliverable artifact a team could actually use.
@@ -33,6 +37,7 @@ Project Overwatch is a multi-agent competitive-intelligence system built for Age
 
 6. Show the output:
    Open `output/latest_report.html` and describe it as the final intelligence artifact.
+7. If time allows, mention the checked-in [EXAMPLE_REPORT.md](/C:/Agentathon/EXAMPLE_REPORT.md) as a compact proof of the report format and evidence quality.
 
 ## Judge-Friendly Framing
 
