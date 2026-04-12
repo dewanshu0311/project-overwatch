@@ -6,6 +6,17 @@ Instead of asking a single LLM to "summarize a repo," Overwatch behaves like a s
 
 The result is a more judge-friendly and real-world-ready agent workflow centered on perception, reasoning, tool use, self-correction, and action.
 
+## Why This Matters
+
+Modern engineering teams cannot manually keep up with every meaningful change across fast-moving repos, releases, SDKs, and ecosystem chatter. Project Overwatch turns that noisy stream into a structured, evidence-grounded intelligence brief.
+
+In practice, it is designed to help teams answer questions like:
+
+- What changed in an important dependency or competitor repo?
+- Which changes are actually architecturally meaningful?
+- Is the ecosystem reacting to those changes?
+- Can we trust the report enough to act on it?
+
 ## What It Does
 
 - Monitors target repositories for meaningful code and release changes
@@ -35,6 +46,47 @@ Key runtime features:
 - Rich terminal dashboard for demo mode
 - HTML report export after successful runs
 - Slack delivery with local fallback when webhook delivery fails
+
+## System Flow
+
+```text
+GitHub / Releases / Files / HN / PyPI
+                |
+                v
+      Prefetch and evidence compression
+                |
+                v
+Monitor -> Signal -> Researcher -> Analyst -> Red Team -> Verifier
+                |
+                v
+        Validated IntelligenceReport
+                |
+                v
+      HTML / JSON / Slack / Memory
+```
+
+## Why Multi-Agent Instead Of One Prompt
+
+This project deliberately avoids a single-shot "summarize the repo" approach.
+
+Each stage has a different job:
+
+- `Monitor`: detect current repo changes
+- `Signal Analyst`: add ecosystem context
+- `Researcher`: gather direct supporting evidence
+- `Analyst`: synthesize the intelligence brief
+- `Red Team Reviewer`: challenge weak or hallucinated claims
+- `Verifier`: decide whether the result is good enough to ship
+
+That separation is what makes the system feel like an analyst workflow rather than a chatbot.
+
+## Real-World Use Cases
+
+- Competitor monitoring for AI/devtool startups
+- Dependency intelligence for platform or developer-experience teams
+- Release tracking for SDKs and API ecosystems
+- Product and engineering research for fast-moving open-source tooling
+- Early-warning monitoring for important architectural shifts in external repos
 
 ## Tech Stack
 
@@ -74,6 +126,7 @@ requirements.txt
 README.md
 CONTEXT.md
 JUDGING_MAP.md
+PRESENTATION_GUIDE.md
 ```
 
 ## Setup
@@ -130,6 +183,18 @@ Successful runs generate:
 
 These outputs are runtime artifacts and are not tracked in Git.
 
+## What Makes It Reliable
+
+The project is designed to reduce blind trust in LLM output:
+
+- prefetched evidence reduces noisy tool loops
+- current URLs are preferred over generic summaries
+- red-team review challenges unsupported claims
+- the verifier checks confidence, source quality, and claim distinctness
+- self-correction retries weak outputs with targeted feedback
+- only validated reports are stored in memory
+- API key rotation handles rate limits more gracefully
+
 ## Why It's Agentic
 
 Project Overwatch goes beyond a single prompt by separating:
@@ -175,6 +240,18 @@ Best one-line summary for a demo:
 - Ecosystem signals such as Hacker News and PyPI are treated as supporting context, not proof of architectural change.
 - Mock and fast-demo modes use fixture-seeded context, but they still rely on live model/tool execution unless those services are unavailable.
 - The strongest reports come from repos with clear current commit, release, or changelog evidence; weaker public evidence can lead to more conservative outputs.
+
+## How It Differs From ChatGPT
+
+ChatGPT can explain a repository if you paste enough context into a prompt.
+
+Project Overwatch is different because it is built as a repeatable agent system:
+
+- it gathers current evidence itself
+- it uses tools instead of only relying on static prompt context
+- it separates research, synthesis, critique, and verification into different stages
+- it retries when quality is weak
+- it produces a structured deliverable artifact instead of only a chat response
 
 ## Security Notes
 
