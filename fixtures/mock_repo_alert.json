@@ -1,0 +1,8 @@
+{
+  "repo": "openai/openai-python",
+  "previous_sha": "abc123def456",
+  "latest_sha": "789ghi012jkl",
+  "changed_files": ["CHANGELOG.md", "src/openai/_client.py", "src/openai/auth/_workload.py"],
+  "scraped_content": "Seed demo context: expect current release-note activity plus client or auth-layer code changes. Treat this fixture only as a non-binding hint; the current monitor evidence pack is the source of truth for architecture claims.",
+  "mock_mode": true
+}

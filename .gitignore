@@ -1,0 +1,14 @@
+.env
+.runtime/
+__pycache__/
+*.pyc
+venv/
+memory_db/
+output/
+last_checked.json
+skills/
+Microsoft/
+
+# Local notes and temp artifacts
+*.log
+*.tmp

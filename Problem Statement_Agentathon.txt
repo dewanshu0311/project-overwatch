@@ -1,0 +1,28 @@
+﻿Problem Statement
+Develop a functional "Agentic Workflow" or "Multi-Agent System" that moves beyond simple chat and into autonomous execution. The core of this challenge is to build an AI Agent that doesn't just talk, but acts. Your solution must demonstrate Reasoning, Tool-Use, and Multi-Step Decision Making. Participants are tasked with identifying a real-world friction point and solving it by orchestrating specialized AI agents that can browse the web, interact with APIs, or manage complex data autonomously.
+The "Agentic" Standard
+To align with the 2026 tech landscape, your agent should aim for these three technical pillars:
+1. Perception: How does your agent "see" the problem? (e.g., watching a GitHub repo, reading an inbox, or monitoring live news).
+2. Reasoning: How does it plan the solution? (e.g., using a "Manager Agent" to delegate tasks to "Sub-Agents").
+3. Action: How does it execute? (e.g., writing code, sending a Slack update, or updating a CRM).
+Possible Use Cases (Inspiration)
+* The AI Research Crew: An agent that monitors a specific industry (like EV battery tech), summarizes news, and drafts a technical briefing for an engineering team.
+* Autonomous Customer Success: An agent that reads a support ticket, checks the user's history in a database, and automatically drafts a personalized resolution.
+* The "DevOps Buddy": An agent that monitors server logs and, upon detecting an error, automatically researches the fix and opens a Pull Request on GitHub.
+* Voice-First Personal Agent: (Similar to the Murf AI challenge) A voice agent that manages your calendar and makes real-time calls to book appointments.
+________________
+
+
+Suggested Tech Stack
+While you are free to choose, we encourage exploring these industry-leading tools:
+* Orchestration: CrewAI, LangChain, or Microsoft AutoGen.
+* Visual Building: n8n (Automation) or Flowise (Drag-and-drop LLM flows).
+* Model Providers: AWS Bedrock, Groq (for high-speed agents).
+________________
+
+
+What Makes a "Winning" Agent?
+We aren't looking for a simple chatbot. A high-scoring project will demonstrate:
+* Tool Integration: Your agent successfully calls an external API or tool to get data.
+* Self-Correction: If the agent makes a mistake, it has the logic to try a different approach.
+* Impact: It solves a task that currently takes a human more than 30 minutes to do manually.
