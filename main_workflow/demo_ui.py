@@ -1,35 +1,31 @@
 """
-Overwatch Dashboard — Rich terminal UI for the intelligence pipeline.
+Overwatch Dashboard - Rich terminal UI for the intelligence pipeline.
 
 Provides visual framing around CrewAI's own verbose output:
   - Header panel with project branding, mode, repo info
   - Attempt tracker between self-correction retries
   - Final report panel with structured results
-  - Pipeline diagram showing the 5/6-agent flow
+  - Pipeline diagram showing the 6-agent flow
 
-Design philosophy (from Codex guardrails):
-  - Thin integration: does NOT capture or redirect CrewAI's internal output
-  - Optional: activated only via --dashboard flag
+Design philosophy:
+  - Thin integration: does not capture or redirect CrewAI's internal output
+  - Optional: activated only via --dashboard
   - Non-invasive: pipeline works identically without the dashboard
 """
 
 from datetime import datetime
 from typing import Optional
 
+from rich import box
 from rich.console import Console, Group
-from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.rule import Rule
-from rich import box
 
 console = Console()
 
 
-# ─── Branding ────────────────────────────────────────────────────────────────
-
-LOGO = """
+LOGO = r"""
  ██████  ██    ██ ███████ ██████  ██     ██  █████  ████████  ██████ ██   ██
 ██    ██ ██    ██ ██      ██   ██ ██     ██ ██   ██    ██    ██      ██   ██
 ██    ██ ██    ██ █████   ██████  ██  █  ██ ███████    ██    ██      ███████
@@ -67,15 +63,15 @@ def show_pipeline_diagram(include_red_team: bool = False) -> None:
     """Display the agent pipeline as a visual flow diagram."""
     if include_red_team:
         flow = (
-            "[cyan]Monitor[/cyan] → [yellow]Signal Analyst[/yellow] → "
-            "[green]Researcher[/green] → [blue]Analyst[/blue] → "
-            "[red]Red Team[/red] → [magenta]Verifier[/magenta]"
+            "[cyan]Monitor[/cyan] -> [yellow]Signal Analyst[/yellow] -> "
+            "[green]Researcher[/green] -> [blue]Analyst[/blue] -> "
+            "[red]Red Team[/red] -> [magenta]Verifier[/magenta]"
         )
         agent_count = "6"
     else:
         flow = (
-            "[cyan]Monitor[/cyan] → [yellow]Signal Analyst[/yellow] → "
-            "[green]Researcher[/green] → [blue]Analyst[/blue] → "
+            "[cyan]Monitor[/cyan] -> [yellow]Signal Analyst[/yellow] -> "
+            "[green]Researcher[/green] -> [blue]Analyst[/blue] -> "
             "[magenta]Verifier[/magenta]"
         )
         agent_count = "5"
@@ -148,7 +144,7 @@ def show_attempt_result(
     if success:
         result_panel = Panel(
             Text.from_markup(
-                f"[bold green]✅ VERIFICATION PASSED[/bold green]\n\n"
+                f"[bold green]VERIFICATION PASSED[/bold green]\n\n"
                 f"  Confidence: [bold]{confidence:.2f}[/bold]"
             ),
             border_style="green",
@@ -157,16 +153,16 @@ def show_attempt_result(
     elif is_rate_limited:
         result_panel = Panel(
             Text.from_markup(
-                "[bold yellow]⚡ RATE LIMITED — Rotating API key and retrying...[/bold yellow]"
+                "[bold yellow]RATE LIMITED - Rotating API key and retrying...[/bold yellow]"
             ),
             border_style="yellow",
             box=box.ROUNDED,
         )
     else:
-        error_list = "\n".join([f"  • {e}" for e in (errors or ["Unknown error"])])
+        error_list = "\n".join([f"  - {e}" for e in (errors or ["Unknown error"])])
         result_panel = Panel(
             Text.from_markup(
-                f"[bold red]❌ VERIFICATION FAILED[/bold red]\n\n{error_list}\n\n"
+                f"[bold red]VERIFICATION FAILED[/bold red]\n\n{error_list}\n\n"
                 f"  [dim]Injecting correction feedback for next attempt...[/dim]"
             ),
             border_style="red",
@@ -184,7 +180,6 @@ def show_final_report(
     attempt_history: Optional[list] = None,
 ) -> None:
     """Display the final intelligence report in a polished panel layout."""
-    # Summary section
     summary_panel = Panel(
         Text(report.summary, style="white"),
         title="[bold white]EXECUTIVE SUMMARY[/bold white]",
@@ -192,7 +187,6 @@ def show_final_report(
         box=box.ROUNDED,
     )
 
-    # Architecture changes table
     changes_table = Table(
         title="Architecture Changes Detected",
         box=box.SIMPLE_HEAVY,
@@ -204,7 +198,6 @@ def show_final_report(
     for i, change in enumerate(report.architecture_changes, 1):
         changes_table.add_row(str(i), change)
 
-    # Sources table
     sources_table = Table(
         title="Cited Sources",
         box=box.SIMPLE_HEAVY,
@@ -215,7 +208,6 @@ def show_final_report(
     for i, source in enumerate(report.cited_sources, 1):
         sources_table.add_row(str(i), source)
 
-    # Metrics panel
     confidence_color = "green" if report.confidence_score >= 0.8 else "yellow" if report.confidence_score >= 0.7 else "red"
     metrics_table = Table(show_header=False, box=None, padding=(0, 2))
     metrics_table.add_column(style="dim")
@@ -253,7 +245,6 @@ def show_final_report(
             detail[:140],
         )
 
-    # Final output
     console.print()
     console.rule("[bold green]INTELLIGENCE REPORT[/bold green]", style="green")
     console.print()
@@ -270,14 +261,14 @@ def show_final_report(
 def show_delivery_status(method: str, success: bool, detail: str = "") -> None:
     """Show the delivery outcome (Slack or fallback)."""
     if success:
-        console.print(f"  [green]✅ Delivered via {method}[/green] {detail}")
+        console.print(f"  [green]Delivered via {method}[/green] {detail}")
     else:
-        console.print(f"  [yellow]⚠️  {method}: {detail}[/yellow]")
+        console.print(f"  [yellow]{method}: {detail}[/yellow]")
 
 
 def show_memory_status(stored: bool, total_reports: int) -> None:
     """Show memory storage outcome."""
     if stored:
-        console.print(f"  [cyan]🧠 Report stored to ChromaDB ({total_reports} total entries)[/cyan]")
+        console.print(f"  [cyan]Report stored to ChromaDB ({total_reports} total entries)[/cyan]")
     else:
-        console.print(f"  [yellow]🧠 Memory storage skipped[/yellow]")
+        console.print("  [yellow]Memory storage skipped[/yellow]")

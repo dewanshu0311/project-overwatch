@@ -1,14 +1,18 @@
 # Project Overwatch
 
-Project Overwatch is an autonomous competitive-intelligence agent built for Agentathon 2026. It monitors live GitHub repository changes, gathers ecosystem signals, researches supporting evidence, red-teams its own findings, verifies the final report, and exports the result as both HTML and JSON.
+Project Overwatch is an autonomous competitive-intelligence agent built for Agentathon 2026. It monitors GitHub repository changes, gathers ecosystem signals, researches supporting evidence, red-teams its own findings, verifies the final report, and exports the result as both HTML and JSON.
+
+Instead of asking a single LLM to "summarize a repo," Overwatch behaves like a small analyst team. It first detects what changed, then gathers supporting context, researches the strongest evidence, writes an intelligence brief, attacks its own claims, validates the final report, and finally delivers a polished artifact a human team can actually use.
+
+The result is a more judge-friendly and real-world-ready agent workflow centered on perception, reasoning, tool use, self-correction, and action.
 
 ## What It Does
 
 - Monitors target repositories for meaningful code and release changes
 - Collects ecosystem context from GitHub, Hacker News, and PyPI
 - Synthesizes a structured intelligence report through a 6-agent pipeline
-- Challenges weak claims with a red-team review stage
-- Verifies report quality before export
+- Challenges weak claims with a dedicated red-team review stage
+- Verifies report quality before export or delivery
 - Exports polished HTML and machine-readable JSON outputs
 - Delivers a summary to Slack or falls back to a local markdown alert
 
@@ -30,6 +34,7 @@ Key runtime features:
 - ChromaDB memory for validated historical reports
 - Rich terminal dashboard for demo mode
 - HTML report export after successful runs
+- Slack delivery with local fallback when webhook delivery fails
 
 ## Tech Stack
 
@@ -67,6 +72,8 @@ fixtures/
 requirements.txt
 .env.example
 README.md
+CONTEXT.md
+JUDGING_MAP.md
 ```
 
 ## Setup
@@ -123,11 +130,11 @@ Successful runs generate:
 
 These outputs are runtime artifacts and are not tracked in Git.
 
-## Why It’s Agentic
+## Why It's Agentic
 
 Project Overwatch goes beyond a single prompt by separating:
 
-- perception of changes
+- perception of repository changes
 - ecosystem signal gathering
 - evidence research
 - synthesis
@@ -146,6 +153,29 @@ For a short live demo:
 4. Highlight the self-correction trace
 5. Open the generated HTML report
 
+## How To Demo In 2 Minutes
+
+If you only get a very short judging window, use this sequence:
+
+1. Start with `python -m main_workflow.main --demo`
+2. While the dashboard is running, say: "This system watches a software repo, gathers proof, researches changes, red-teams itself, and only then ships a final report."
+3. Point to the evidence preview and explain that the pipeline is grounded in current repo evidence, not just generic model memory.
+4. Point to the 6-agent pipeline and say each agent has a different job: detect, contextualize, research, analyze, challenge, verify.
+5. When the run completes, show the self-correction trace and final confidence score.
+6. Open `output/latest_report.html` and frame it as the deliverable artifact for a real team.
+
+Best one-line summary for a demo:
+
+"Project Overwatch is an autonomous AI analyst team that turns raw repository changes into a verified competitive-intelligence report."
+
+## Known Limitations
+
+- The system is still probabilistic because it relies on live LLM calls, so exact phrasing and confidence can vary between runs.
+- External APIs can affect runtime and quality, especially under rate limits or when source systems are noisy.
+- Ecosystem signals such as Hacker News and PyPI are treated as supporting context, not proof of architectural change.
+- Mock and fast-demo modes use fixture-seeded context, but they still rely on live model/tool execution unless those services are unavailable.
+- The strongest reports come from repos with clear current commit, release, or changelog evidence; weaker public evidence can lead to more conservative outputs.
+
 ## Security Notes
 
 - Never commit `.env`
@@ -160,4 +190,3 @@ Project Overwatch is designed to demonstrate:
 - Reasoning through a role-based multi-agent workflow
 - Action through report generation and delivery
 - Self-correction through retries, validation, and red-team critique
-

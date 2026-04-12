@@ -3,7 +3,7 @@ Main entry point — CLI interface for the intelligence pipeline.
 
 Modes:
   --mock       : Loads fixture data BUT still uses live LLM + tools.
-  --fast-demo  : Same as --mock but with higher max_rpm for faster execution.
+  --fast-demo  : Fixture-seeded fast path using the lighter model profile.
   --dashboard  : Enables the Rich terminal dashboard for visual demo.
   --demo       : Combines --fast-demo + --dashboard + HTML export + auto-open.
   --open-report: Auto-opens the HTML report in browser after pipeline completes.
@@ -156,7 +156,7 @@ def run_pipeline(
 
     Args:
         mock: load fixture data (still uses live LLM + tools for reasoning)
-        fast_demo: same as mock but with higher max_rpm for faster execution
+        fast_demo: fixture-seeded fast path using the lighter model profile
         dashboard: enable Rich terminal dashboard for visual demo
         open_report: auto-open HTML report in browser after completion
     """
@@ -313,7 +313,7 @@ def run_pipeline(
                 import webbrowser
                 webbrowser.open(str(html_path))
         except ImportError:
-            pass  # report_export.py not yet implemented — graceful skip
+            pass  # Graceful skip if report export cannot be imported.
         except Exception as e:
             console.print(f"[yellow]HTML export failed: {e}[/yellow]")
 
@@ -324,7 +324,11 @@ def main() -> None:
     """CLI entry point with all mode flags."""
     parser = argparse.ArgumentParser(description="Project Overwatch — Autonomous Competitive Intelligence")
     parser.add_argument("--mock", action="store_true", help="Load fixture data (live LLM + tools still active)")
-    parser.add_argument("--fast-demo", action="store_true", help="Same as --mock but with higher max_rpm")
+    parser.add_argument(
+        "--fast-demo",
+        action="store_true",
+        help="Use fixture-seeded context plus the fast model profile",
+    )
     parser.add_argument("--dashboard", action="store_true", help="Enable Rich terminal dashboard")
     parser.add_argument("--open-report", action="store_true", help="Auto-open HTML report in browser")
     parser.add_argument("--demo", action="store_true", help="Full demo mode: fast-demo + dashboard + export + open")
