@@ -46,6 +46,27 @@ Important:
 - you can use either `owner/name`
 - or a full GitHub URL like `https://github.com/openclaw/openclaw`
 
+### Full power live repo command
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --open-report --force-analysis --repo https://github.com/openclaw/openclaw
+```
+
+Use this when:
+- you want the balanced high-quality model path
+- you want a real custom GitHub repo
+- you want the dashboard during the run
+- you want the HTML report to open automatically at the end
+
+What this gives you:
+- real live repo input
+- balanced profile for stronger synthesis
+- visual dashboard
+- browser report at the end
+- no risk of the run stopping just because there were no new commits today
+
+This is the strongest all-in-one command to show at the end when you want quality plus credibility.
+
 ### Live repo check with normal change detection
 
 ```powershell
@@ -94,6 +115,7 @@ Best use:
 - live judging
 - someone gives you a repo on the spot
 - you want the strongest mix of credibility and presentation
+- you want the shorter shortcut version of the full-power live command
 
 ## 3. Quality Check Commands
 
@@ -185,4 +207,10 @@ Live repo demo that will not stop on "no changes detected":
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --live-demo --repo https://github.com/openclaw/openclaw
+```
+
+Full power live repo demo:
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --open-report --force-analysis --repo https://github.com/openclaw/openclaw
 ```

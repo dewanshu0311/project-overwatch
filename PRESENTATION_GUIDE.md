@@ -44,6 +44,12 @@ Live-repo demo command:
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo owner/name --live-demo
 ```
 
+Full power live-repo command:
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --open-report --force-analysis --repo owner/name
+```
+
 7. If time allows, mention the checked-in [EXAMPLE_REPORT.md](/C:/Agentathon/EXAMPLE_REPORT.md) as a compact proof of the report format and evidence quality.
 
 ## Judge-Friendly Framing
