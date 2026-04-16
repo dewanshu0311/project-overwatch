@@ -167,13 +167,19 @@ c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo
 Live judge-facing demo on a custom repo:
 
 ```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo https://github.com/openclaw/openclaw --live-demo
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --live-demo --repo https://github.com/openclaw/openclaw
 ```
 
-Live analysis on a custom repo without auto-open:
+Live analysis on a custom repo with normal change detection:
 
 ```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo openclaw/openclaw --dashboard --force-analysis
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --repo openclaw/openclaw
+```
+
+Live analysis on a custom repo without stopping on "no changes detected":
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --force-analysis --repo openclaw/openclaw
 ```
 
 Mock mode:

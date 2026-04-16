@@ -1,8 +1,8 @@
 # Project Overwatch Command Guide
 
-Project Overwatch supports both fixture-seeded presentation runs and real live analysis against user-supplied GitHub repositories.
+This file is the practical version of the README. Use it when you want to run the project quickly without thinking about every flag.
 
-Use the project virtual environment Python on Windows:
+On Windows, always use the project virtual environment Python:
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe
@@ -10,136 +10,179 @@ c:\Agentathon\venv\Scripts\python.exe
 
 ## 1. Fast Demo Commands
 
-### One-click judge demo
+These are the safest commands for short presentations.
+
+### One-click demo
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo
 ```
 
-What it does:
-- uses the fixture-seeded fast path
-- enables the dashboard
-- opens the generated HTML report automatically
-- best for short presentations where you want a fast, stable run
+Use this when:
+- you want the fastest clean demo
+- you want the dashboard
+- you want the HTML report to open automatically
 
-### Fast demo without auto-open
+What it uses:
+- fixture-seeded context
+- fast model profile
+
+### Fast demo without opening the browser
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --fast-demo --dashboard
 ```
 
-What it does:
-- uses fixture data and the fast model profile
-- shows the dashboard
-- keeps the browser closed
-- best for quick internal checks
+Use this when:
+- you want to test the dashboard
+- you want a quick internal check
 
-## 2. Live Custom Repo Commands
+## 2. Live Repo Commands
+
+These commands are for proving the system works on a real repository.
+
+Important:
+- the repo goes at the end of the command so you can replace it quickly
+- you can use either `owner/name`
+- or a full GitHub URL like `https://github.com/openclaw/openclaw`
+
+### Live repo check with normal change detection
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --repo https://github.com/openclaw/openclaw
+```
+
+Use this when:
+- you want honest live behavior
+- you only want the pipeline to run if a new SHA difference is detected
+
+What happens if nothing changed:
+- the app does not fake a result
+- it stops and tells you no changes were detected
+
+This is the better command when you want to show strict live monitoring behavior.
+
+### Live repo check with forced analysis
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --force-analysis --repo https://github.com/openclaw/openclaw
+```
+
+Use this when:
+- you want to inspect a real repo even if there were no new commits today
+- you want the dashboard but do not want the browser to open automatically
+
+What happens here:
+- the app still checks the repo normally first
+- if there is no new SHA difference, it shows that forced analysis is being used
+- then it analyzes the current snapshot anyway
+
+This is useful for live judging when you need the system to continue instead of stopping.
 
 ### Recommended live judging command
 
 ```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo https://github.com/openclaw/openclaw --live-demo
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --live-demo --repo https://github.com/openclaw/openclaw
 ```
 
-What it does:
-- accepts a full GitHub URL or `owner/name`
-- enables the dashboard
+What this does:
+- turns on the dashboard
 - opens the HTML report automatically
-- forces analysis even if no new commit was detected that day
-- best for proving the system works on a real repo chosen at presentation time
+- forces analysis if there was no new SHA difference
 
-### Live custom repo without browser pop-up
+Best use:
+- live judging
+- someone gives you a repo on the spot
+- you want the strongest mix of credibility and presentation
 
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo openclaw/openclaw --dashboard --force-analysis
-```
+## 3. Quality Check Commands
 
-What it does:
-- analyzes the exact repo you provide
-- shows the dashboard
-- does not auto-open the report
-- still proceeds even when no SHA change is detected
-
-### Live custom repo with normal change detection
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo openclaw/openclaw --dashboard
-```
-
-What it does:
-- analyzes the repo only if a new SHA difference is detected
-- best when you want strict live detection behavior
-
-## 3. Full Quality Commands
-
-### Mock quality check
+### Mock quality run
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --mock --dashboard
 ```
 
-What it does:
-- uses fixture data with the balanced profile
-- keeps the stronger synthesis path for higher-quality reasoning
-- useful when you want to inspect logic without depending on live repo volatility
+Use this when:
+- you want the balanced profile
+- you want to inspect reasoning quality
+- you do not want repo volatility to affect the run
 
-### Live mode using configured target repos
+### Live configured-target run
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard
 ```
 
-What it does:
-- checks the repos listed in `main_workflow/config.py`
-- runs live monitoring and live research
-- useful for the normal multi-repo workflow
+Use this when:
+- you want the project to check the repos already listed in `main_workflow/config.py`
+- you are running the normal multi-repo workflow
 
-## 4. Utility Commands
+## 4. Headless Commands
 
-### Headless live run
+### Standard headless run
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main
 ```
 
-### Open the latest HTML report
+Use this when:
+- you do not need the dashboard
+- you just want the normal terminal output
+
+### Headless custom repo run with forced analysis
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --force-analysis --repo openclaw/openclaw
+```
+
+Use this when:
+- you want a one-off repo check
+- you do not care about the dashboard
+
+## 5. Open Reports Manually
+
+### HTML report
 
 ```powershell
 start c:\Agentathon\output\latest_report.html
 ```
 
-### Open the latest JSON report
+### JSON report
 
 ```powershell
 notepad c:\Agentathon\output\latest_report.json
 ```
 
-## 5. Key Flags
+## 6. Quick Flag Meaning
 
-| Flag | Purpose |
+| Flag | Meaning |
 | :--- | :--- |
-| `--dashboard` | Show the Rich terminal dashboard. |
-| `--mock` | Use fixture data with live LLM/tool reasoning. |
-| `--fast-demo` | Use the fast model profile and fixture-seeded context. |
-| `--demo` | Shortcut for `--fast-demo --dashboard --open-report`. |
-| `--repo` | Target a specific GitHub repo via `owner/name` or full GitHub URL. |
-| `--force-analysis` | Analyze the repo even when no new SHA difference is detected. |
-| `--live-demo` | Shortcut for `--dashboard --open-report --force-analysis`. |
+| `--dashboard` | Show the Rich dashboard. |
 | `--open-report` | Open the HTML report automatically after success. |
+| `--repo` | Target a specific GitHub repo. Accepts `owner/name` or full GitHub URL. |
+| `--force-analysis` | Continue even if no new SHA difference was detected. |
+| `--live-demo` | Shortcut for live presentation mode: dashboard + open report + force analysis. |
+| `--demo` | Shortcut for fast fixture demo: fast-demo + dashboard + open report. |
+| `--mock` | Use fixture data with live LLM/tool reasoning. |
+| `--fast-demo` | Use fixture-seeded context and the fast model profile. |
 
-## 6. Best Practice For Judges
+## 7. Best Commands To Remember
 
-Use one of these two commands:
-
-Fixture-seeded stability:
+Fast safe demo:
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo
 ```
 
-Real live credibility:
+Strict live repo demo:
 
 ```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo owner/name --live-demo
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --repo https://github.com/openclaw/openclaw
+```
+
+Live repo demo that will not stop on "no changes detected":
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --live-demo --repo https://github.com/openclaw/openclaw
 ```
