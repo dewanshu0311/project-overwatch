@@ -126,6 +126,7 @@ fixtures/
 requirements.txt
 .env.example
 README.md
+COMMAND_GUIDE.md
 CONTEXT.md
 JUDGING_MAP.md
 PRESENTATION_GUIDE.md
@@ -137,7 +138,7 @@ PRESENTATION_GUIDE.md
 2. Install dependencies:
 
 ```powershell
-python -m pip install -r requirements.txt
+c:\Agentathon\venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
 3. Create a local `.env` from `.env.example` and fill in your keys:
@@ -154,25 +155,37 @@ The real `.env` file is intentionally excluded from Git.
 Fast demo with dashboard:
 
 ```powershell
-python -m main_workflow.main --fast-demo --dashboard
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --fast-demo --dashboard
 ```
 
 Full judge-facing demo:
 
 ```powershell
-python -m main_workflow.main --demo
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo
+```
+
+Live judge-facing demo on a custom repo:
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo https://github.com/openclaw/openclaw --live-demo
+```
+
+Live analysis on a custom repo without auto-open:
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo openclaw/openclaw --dashboard --force-analysis
 ```
 
 Mock mode:
 
 ```powershell
-python -m main_workflow.main --mock --dashboard
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --mock --dashboard
 ```
 
 Live mode:
 
 ```powershell
-python -m main_workflow.main --dashboard
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard
 ```
 
 ## Outputs
@@ -228,17 +241,18 @@ This gives the system a more reliable reasoning chain and a visible self-correct
 
 For a short live demo:
 
-1. Run `python -m main_workflow.main --demo`
+1. Run `c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo`
 2. Show the dashboard header and evidence preview
 3. Point out the 6-agent pipeline
 4. Highlight the self-correction trace
 5. Open the generated HTML report
+6. For a live credibility demo, switch to `--repo owner/name --live-demo` and show a real repo that is not hardcoded in the fixture file
 
 ## How To Demo In 2 Minutes
 
 If you only get a very short judging window, use this sequence:
 
-1. Start with `python -m main_workflow.main --demo`
+1. Start with `c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo`
 2. While the dashboard is running, say: "This system watches a software repo, gathers proof, researches changes, red-teams itself, and only then ships a final report."
 3. Point to the evidence preview and explain that the pipeline is grounded in current repo evidence, not just generic model memory.
 4. Point to the 6-agent pipeline and say each agent has a different job: detect, contextualize, research, analyze, challenge, verify.

@@ -1,13 +1,16 @@
 """
-Main entry point — CLI interface for the intelligence pipeline.
+Main entry point - CLI interface for the intelligence pipeline.
 
 Modes:
-  --mock       : Loads fixture data BUT still uses live LLM + tools.
-  --fast-demo  : Fixture-seeded fast path using the lighter model profile.
-  --dashboard  : Enables the Rich terminal dashboard for visual demo.
-  --demo       : Combines --fast-demo + --dashboard + HTML export + auto-open.
-  --open-report: Auto-opens the HTML report in browser after pipeline completes.
-  (no flags)   : Fully live mode — detects real GitHub changes.
+  --mock        : Loads fixture data but still uses live LLM + tools.
+  --fast-demo   : Fixture-seeded fast path using the lighter model profile.
+  --dashboard   : Enables the Rich terminal dashboard for visual demo.
+  --demo        : Combines --fast-demo + --dashboard + --open-report.
+  --repo        : Targets a specific GitHub repository or full GitHub URL.
+  --force-analysis: Runs analysis even when no new SHA difference is detected.
+  --live-demo   : Combines --dashboard + --open-report + --force-analysis.
+  --open-report : Auto-opens the HTML report in the browser after completion.
+  (no flags)    : Fully live mode using the repos listed in config.py.
 """
 import argparse
 import json
@@ -15,28 +18,62 @@ import os
 import re
 import sys
 import time
+from urllib.parse import urlparse
+
+from crewai import Crew, Process
+from rich.console import Console
+
+from .config import CONFIDENCE_THRESHOLD, MOCK_FIXTURE, TARGET_REPOS
+from .self_correction_loop import run_with_self_correction
+from .state_manager import check_for_changes
+from .tasks import (
+    analysis_task,
+    monitor_task,
+    red_team_task,
+    research_task,
+    signal_gathering_task,
+    verification_task,
+)
+from .tools import (
+    deep_scrape_tool,
+    github_monitor_tool,
+    hackernews_signal_tool,
+    pypi_stats_tool,
+    slack_alert_tool,
+)
 
 # Force UTF-8 output to prevent CrewAI's internal emojis from crashing on Windows cp1252
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-from crewai import Crew, Process
-from rich.console import Console
-
-from .config import TARGET_REPOS, MOCK_FIXTURE, CONFIDENCE_THRESHOLD
-from .state_manager import check_for_changes
-from .tasks import monitor_task, signal_gathering_task, research_task, analysis_task, red_team_task, verification_task
-from .self_correction_loop import run_with_self_correction
-from .tools import (
-    slack_alert_tool,
-    github_monitor_tool,
-    deep_scrape_tool,
-    hackernews_signal_tool,
-    pypi_stats_tool,
-)
-
 console = Console()
+
+
+def _normalize_repo_input(repo_input: str) -> str:
+    """Accept owner/name or full GitHub URLs and normalize to owner/name."""
+    raw = (repo_input or "").strip()
+    if not raw:
+        raise ValueError("Repository input cannot be empty.")
+
+    if raw.startswith("git@github.com:"):
+        raw = raw.replace("git@github.com:", "", 1)
+    if raw.lower().endswith(".git"):
+        raw = raw[:-4]
+
+    if re.match(r"^https?://", raw, flags=re.IGNORECASE):
+        parsed = urlparse(raw)
+        if parsed.netloc.lower() not in {"github.com", "www.github.com"}:
+            raise ValueError("Only GitHub repository URLs are supported.")
+        parts = [part for part in parsed.path.split("/") if part]
+        if len(parts) < 2:
+            raise ValueError("GitHub URL must include both owner and repository name.")
+        return f"{parts[0]}/{parts[1]}"
+
+    parts = [part for part in raw.strip("/").split("/") if part]
+    if len(parts) != 2:
+        raise ValueError("Repository must look like owner/name or https://github.com/owner/name")
+    return f"{parts[0]}/{parts[1]}"
 
 
 def _compact_monitor_seed(seed_text: str) -> str:
@@ -118,10 +155,71 @@ def _build_memory_seed(repo: str) -> str:
         return "No validated historical data."
 
 
+def _context_from_change_result(repo: str, result: dict, force_analysis: bool) -> dict | None:
+    """Turn change-detection output into pipeline context."""
+    degraded = result.get("degraded", False)
+    if degraded:
+        console.print("[yellow]Running with degraded perception (no GitHub token)[/yellow]")
+
+    if result.get("changed"):
+        latest_sha = result.get("latest_sha", "unknown")
+        return {
+            "repo": repo,
+            "changes": [f"SHA: {latest_sha}"],
+            "scraped_content": "Deep research needed.",
+        }
+
+    if not force_analysis:
+        return None
+
+    latest_sha = result.get("latest_sha") or "current_snapshot"
+    reason = result.get("error") or "No new SHA difference detected."
+    console.print(
+        f"[yellow]Force analysis enabled for {repo}. "
+        f"Proceeding with the current repo snapshot despite detection status: {reason}[/yellow]"
+    )
+    return {
+        "repo": repo,
+        "changes": [f"SHA: {latest_sha}", "Forced analysis of the current repo snapshot"],
+        "scraped_content": "Forced live analysis requested.",
+    }
+
+
+def _build_live_context(repo_override: str | None = None, force_analysis: bool = False) -> dict | None:
+    """Build live context from either a specific repo or the configured target list."""
+    repos_to_check = [repo_override] if repo_override else TARGET_REPOS
+    fallback_candidate: tuple[str, dict] | None = None
+
+    for index, repo in enumerate(repos_to_check):
+        result = check_for_changes(repo)
+        if index == 0:
+            fallback_candidate = (repo, result)
+
+        context = _context_from_change_result(repo, result, force_analysis=False)
+        if context is not None:
+            return context
+
+    if force_analysis and fallback_candidate is not None:
+        repo, result = fallback_candidate
+        return _context_from_change_result(repo, result, force_analysis=True)
+
+    if repo_override:
+        console.print(
+            f"[yellow]No changes detected for {repo_override}. "
+            "Re-run with --force-analysis or --live-demo to analyze the current repo snapshot anyway.[/yellow]"
+        )
+    else:
+        console.print(
+            "[yellow]No changes detected in configured target repos. "
+            "Use --force-analysis, --live-demo, or --repo owner/name to inspect a repo anyway.[/yellow]"
+        )
+    return None
+
+
 def _build_crew(context: dict, fast: bool = False) -> Crew:
     """Build the 6-agent sequential crew from context.
 
-    Pipeline: Monitor → Signal → Researcher → Analyst → Red Team → Verifier
+    Pipeline: Monitor -> Signal -> Researcher -> Analyst -> Red Team -> Verifier
 
     Args:
         context: dict with repo, changes, scraped_content, correction_feedback
@@ -136,8 +234,12 @@ def _build_crew(context: dict, fast: bool = False) -> Crew:
 
     return Crew(
         agents=[
-            t_monitor.agent, t_signal.agent, t_research.agent,
-            t_analysis.agent, t_red_team.agent, t_verify.agent,
+            t_monitor.agent,
+            t_signal.agent,
+            t_research.agent,
+            t_analysis.agent,
+            t_red_team.agent,
+            t_verify.agent,
         ],
         tasks=[t_monitor, t_signal, t_research, t_analysis, t_red_team, t_verify],
         process=Process.sequential,
@@ -151,6 +253,9 @@ def run_pipeline(
     fast_demo: bool = False,
     dashboard: bool = False,
     open_report: bool = False,
+    repo_override: str | None = None,
+    force_analysis: bool = False,
+    live_demo: bool = False,
 ) -> None:
     """Execute the full intelligence pipeline.
 
@@ -159,20 +264,25 @@ def run_pipeline(
         fast_demo: fixture-seeded fast path using the lighter model profile
         dashboard: enable Rich terminal dashboard for visual demo
         open_report: auto-open HTML report in browser after completion
+        repo_override: optional owner/name or GitHub URL to inspect in live mode
+        force_analysis: continue with the current repo snapshot even if no new SHA is detected
+        live_demo: judge-friendly live mode shortcut with dashboard + auto-open + force analysis
     """
     start_time = time.time()
 
-    # Determine mode label
     if fast_demo:
         mode = "fast-demo"
     elif mock:
         mode = "mock"
+    elif live_demo:
+        mode = "live-demo"
+    elif repo_override:
+        mode = "live-custom"
     else:
         mode = "live"
 
-    # Load context
     if mock or fast_demo:
-        with open(MOCK_FIXTURE, "r") as f:
+        with open(MOCK_FIXTURE, "r", encoding="utf-8") as f:
             mock_data = json.load(f)
         context = {
             "repo": mock_data["repo"],
@@ -180,21 +290,8 @@ def run_pipeline(
             "scraped_content": mock_data["scraped_content"],
         }
     else:
-        context = None
-        for repo in TARGET_REPOS:
-            result = check_for_changes(repo)
-            if result.get("changed"):
-                degraded = result.get("degraded", False)
-                if degraded:
-                    console.print("[yellow]Running with degraded perception (no GitHub token)[/yellow]")
-                context = {
-                    "repo": repo,
-                    "changes": [f"SHA: {result['latest_sha']}"],
-                    "scraped_content": "Deep research needed.",
-                }
-                break
+        context = _build_live_context(repo_override=repo_override, force_analysis=force_analysis)
         if context is None:
-            console.print("No changes detected. Exiting.")
             return
 
     repo = context.get("repo", "unknown")
@@ -220,24 +317,24 @@ def run_pipeline(
         os.environ["OVERWATCH_PREFETCH_SIGNAL"] = "0"
         os.environ["OVERWATCH_PREFETCH_MEMORY"] = "0"
 
-    # Use a lighter model profile for fast-demo reliability under free-tier limits.
     os.environ["OVERWATCH_MODEL_PROFILE"] = "fast" if fast_demo else "balanced"
 
-    # Dashboard: show header and pipeline
     dashboard_cb = None
     if dashboard:
         from .demo_ui import (
-            show_header, show_pipeline_diagram,
-            show_attempt_start, show_attempt_result, show_evidence_preview,
+            show_attempt_result,
+            show_attempt_start,
+            show_evidence_preview,
+            show_header,
+            show_pipeline_diagram,
         )
         from .key_manager import get_key_pool_status
+
         groq_status = get_key_pool_status("GROQ")
         fc_status = get_key_pool_status("FIRECRAWL")
         show_header(mode, repo, groq_status["total_keys"], fc_status["total_keys"])
         show_pipeline_diagram(include_red_team=True)
         show_evidence_preview(context)
-
-        # Build callback dict for self-correction loop
         dashboard_cb = {
             "attempt_start": show_attempt_start,
             "attempt_result": lambda ok, conf, errs, rl=False: show_attempt_result(ok, conf, errs, rl),
@@ -248,21 +345,17 @@ def run_pipeline(
 
     console.print("[blue]Starting crew with self-correction loop...[/blue]")
 
-    # Build crew factory
     def crew_factory(ctx):
         return _build_crew(ctx, fast=fast_demo)
 
-    # Track attempts for final report
     report = run_with_self_correction(crew_factory, context, dashboard_callback=dashboard_cb)
     attempts_used = dashboard_cb.get("attempts_used", 1) if dashboard_cb else 1
 
     elapsed = time.time() - start_time
 
     if report is not None:
-        # Deliver via Slack (or fallback)
         delivery_result = slack_alert_tool.run(report.summary)
 
-        # Store in memory
         memory_stored = False
         total_reports = 0
         try:
@@ -274,6 +367,7 @@ def run_pipeline(
             )
             if report_is_valid:
                 from .memory import CognitiveMemory
+
                 mem = CognitiveMemory()
                 mem.store_report(report, repo)
                 memory_stored = True
@@ -283,9 +377,9 @@ def run_pipeline(
         except Exception as e:
             console.print(f"[yellow]Memory storage failed: {e}[/yellow]")
 
-        # Dashboard: show final report
         if dashboard:
-            from .demo_ui import show_final_report, show_delivery_status, show_memory_status
+            from .demo_ui import show_delivery_status, show_final_report, show_memory_status
+
             show_final_report(
                 report,
                 elapsed,
@@ -304,16 +398,17 @@ def run_pipeline(
         else:
             console.print("[green]Delivering report...[/green]")
 
-        # HTML export (always when report succeeds)
         try:
             from .report_export import export_html_report
+
             html_path = export_html_report(report, repo, mode, elapsed)
             console.print(f"[green]HTML report exported: {html_path}[/green]")
             if open_report:
                 import webbrowser
+
                 webbrowser.open(str(html_path))
         except ImportError:
-            pass  # Graceful skip if report export cannot be imported.
+            pass
         except Exception as e:
             console.print(f"[yellow]HTML export failed: {e}[/yellow]")
 
@@ -322,7 +417,7 @@ def run_pipeline(
 
 def main() -> None:
     """CLI entry point with all mode flags."""
-    parser = argparse.ArgumentParser(description="Project Overwatch — Autonomous Competitive Intelligence")
+    parser = argparse.ArgumentParser(description="Project Overwatch - Autonomous Competitive Intelligence")
     parser.add_argument("--mock", action="store_true", help="Load fixture data (live LLM + tools still active)")
     parser.add_argument(
         "--fast-demo",
@@ -331,14 +426,48 @@ def main() -> None:
     )
     parser.add_argument("--dashboard", action="store_true", help="Enable Rich terminal dashboard")
     parser.add_argument("--open-report", action="store_true", help="Auto-open HTML report in browser")
-    parser.add_argument("--demo", action="store_true", help="Full demo mode: fast-demo + dashboard + export + open")
+    parser.add_argument("--demo", action="store_true", help="Full demo mode: fast-demo + dashboard + open-report")
+    parser.add_argument(
+        "--repo",
+        type=str,
+        help="Analyze a specific GitHub repo using owner/name or a full GitHub URL",
+    )
+    parser.add_argument(
+        "--force-analysis",
+        action="store_true",
+        help="Run analysis even when no new SHA difference is detected",
+    )
+    parser.add_argument(
+        "--live-demo",
+        action="store_true",
+        help="Live presentation mode: dashboard + open-report + force-analysis",
+    )
     args = parser.parse_args()
 
-    # --demo implies all presentation features
+    if args.repo:
+        try:
+            args.repo = _normalize_repo_input(args.repo)
+        except ValueError as exc:
+            parser.error(str(exc))
+
+    if args.repo and (args.mock or args.fast_demo or args.demo):
+        parser.error("--repo cannot be combined with --mock, --fast-demo, or --demo. Use live mode or --live-demo instead.")
+
+    if args.force_analysis and (args.mock or args.fast_demo or args.demo):
+        parser.error("--force-analysis is only available in live mode or with --live-demo.")
+
+    if args.live_demo and (args.mock or args.fast_demo or args.demo):
+        parser.error("--live-demo cannot be combined with --mock, --fast-demo, or --demo.")
+
     if args.demo:
         args.fast_demo = True
         args.dashboard = True
         args.open_report = True
+
+    if args.live_demo:
+        args.dashboard = True
+        args.open_report = True
+        args.force_analysis = True
 
     try:
         run_pipeline(
@@ -346,6 +475,9 @@ def main() -> None:
             fast_demo=args.fast_demo,
             dashboard=args.dashboard,
             open_report=args.open_report,
+            repo_override=args.repo,
+            force_analysis=args.force_analysis,
+            live_demo=args.live_demo,
         )
     except KeyboardInterrupt:
         console.print("Interrupted by user.")

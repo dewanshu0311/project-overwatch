@@ -37,6 +37,13 @@ Project Overwatch is a multi-agent competitive-intelligence system built for Age
 
 6. Show the output:
    Open `output/latest_report.html` and describe it as the final intelligence artifact.
+
+Live-repo demo command:
+
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --repo owner/name --live-demo
+```
+
 7. If time allows, mention the checked-in [EXAMPLE_REPORT.md](/C:/Agentathon/EXAMPLE_REPORT.md) as a compact proof of the report format and evidence quality.
 
 ## Judge-Friendly Framing
