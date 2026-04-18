@@ -127,6 +127,7 @@ requirements.txt
 .env.example
 README.md
 COMMAND_GUIDE.md
+DEMO_RUNBOOK.md
 CONTEXT.md
 JUDGING_MAP.md
 PRESENTATION_GUIDE.md

@@ -9,6 +9,7 @@ On rate limit errors, marks the exhausted key and rotates to next one.
 """
 import re
 import time
+from dataclasses import dataclass, field
 from typing import Callable, Optional
 from urllib.parse import urlparse
 
@@ -23,6 +24,15 @@ console = Console()
 
 RETRY_DELAY_SECONDS = 10
 _CRITIQUE_TOKENS = ("ACCEPTED_CLAIMS", "CHALLENGED_CLAIMS", "MISSING_EVIDENCE", "VERDICT")
+
+
+@dataclass
+class SelfCorrectionResult:
+    """Outcome wrapper for the self-correction loop."""
+    report: Optional[IntelligenceReport]
+    verified: bool
+    attempts_used: int
+    last_errors: list[str] = field(default_factory=list)
 
 
 def _has_precise_source(url: str) -> bool:
@@ -153,11 +163,12 @@ def run_with_self_correction(
     crew_factory: Callable,
     research_context: dict,
     dashboard_callback: Optional[dict] = None,
-) -> Optional[IntelligenceReport]:
+) -> SelfCorrectionResult:
     """Run the crew pipeline with automatic self-correction and key rotation."""
     attempt = 0
     context = research_context.copy()
     last_report = None
+    last_errors: list[str] = []
     cb = dashboard_callback or {}
 
     while attempt <= MAX_RETRIES:
@@ -180,9 +191,12 @@ def run_with_self_correction(
 
             last_report = report
             failed = _validate_report(report, context)
+            last_errors = failed
 
             if not failed:
                 cb["attempts_used"] = attempt + 1
+                cb["verified"] = True
+                cb["final_errors"] = []
                 cb.setdefault("attempt_history", []).append(
                     {
                         "attempt": attempt + 1,
@@ -195,7 +209,12 @@ def run_with_self_correction(
                     cb["attempt_result"](True, report.confidence_score, [])
                 else:
                     console.print("[bold green]Verification Passed![/bold green]")
-                return report
+                return SelfCorrectionResult(
+                    report=report,
+                    verified=True,
+                    attempts_used=attempt + 1,
+                    last_errors=[],
+                )
 
             cb.setdefault("attempt_history", []).append(
                 {
@@ -214,6 +233,7 @@ def run_with_self_correction(
         except Exception as e:
             error_str = str(e)
             console.print(f"[bold red]Failure: {error_str[:200]}[/bold red]")
+            last_errors = [error_str[:200]]
 
             was_rate_limit = _handle_rate_limit_error(error_str)
             if was_rate_limit:
@@ -228,6 +248,7 @@ def run_with_self_correction(
                 if "attempt_result" in cb:
                     cb["attempt_result"](False, None, ["Rate limited"], True)
                 context["correction_feedback"] = "RATE_LIMITED: Retrying with rotated API key."
+                last_errors = ["Rate limited; rotated API key"]
             else:
                 cb.setdefault("attempt_history", []).append(
                     {
@@ -244,6 +265,13 @@ def run_with_self_correction(
             console.print(f"[dim]Cooling down {RETRY_DELAY_SECONDS}s before retry...[/dim]")
             time.sleep(RETRY_DELAY_SECONDS)
 
-    console.print("[yellow]Max retries exhausted. Returning best available report.[/yellow]")
+    console.print("[yellow]Max retries exhausted. No verified report was produced.[/yellow]")
     cb["attempts_used"] = attempt
-    return last_report
+    cb["verified"] = False
+    cb["final_errors"] = last_errors
+    return SelfCorrectionResult(
+        report=last_report,
+        verified=False,
+        attempts_used=attempt,
+        last_errors=last_errors,
+    )

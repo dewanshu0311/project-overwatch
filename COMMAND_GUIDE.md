@@ -1,33 +1,20 @@
 # Project Overwatch Command Guide
 
-This file is the practical version of the README. Use it when you want to run the project quickly without thinking about every flag.
+This guide keeps only the commands you are most likely to use during a demo or live presentation.
 
-On Windows, always use the project virtual environment Python:
+Use this Python path on Windows:
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe
 ```
 
-## Model Profiles
-
-- `Fast profile`
-  - uses the lighter model path
-  - best for speed and stable short demos
-- `Balanced profile`
-  - uses the higher-quality synthesis path
-  - best when you want stronger reasoning and a more impressive final report
-
-## 1. Fast Demo Commands
-
-These are the safest commands for short presentations.
-
-### One-click demo
+## 1. Starter Demo
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo
 ```
 
-Details:
+What it uses:
 - Model: `Fast profile`
 - Dashboard: `Yes`
 - Auto-open report: `Yes`
@@ -35,17 +22,17 @@ Details:
 - Data source: `Fixture-seeded`
 
 Use this when:
-- you want the fastest clean demo
-- you want the dashboard
-- you want the HTML report to open automatically
+- you want a clean opening demo
+- you want to show the dashboard quickly
+- you want the report to open automatically at the end
 
-### Fast demo without opening the browser
+## 2. Terminal-Only Demo
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --fast-demo --dashboard
 ```
 
-Details:
+What it uses:
 - Model: `Fast profile`
 - Dashboard: `Yes`
 - Auto-open report: `No`
@@ -53,25 +40,38 @@ Details:
 - Data source: `Fixture-seeded`
 
 Use this when:
-- you want to test the dashboard
-- you want a quick internal check
+- you want to show the run in the terminal without switching to the browser immediately
+- you want a quick test before presenting
 
-## 2. Live Repo Commands
+## 3. Live Repo Check
 
-These commands are for proving the system works on a real repository.
+```powershell
+c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --repo https://github.com/openclaw/openclaw
+```
 
-Important:
-- the repo goes at the end of the command so you can replace it quickly
-- you can use either `owner/name`
-- or a full GitHub URL like `https://github.com/openclaw/openclaw`
+What it uses:
+- Model: `Balanced profile`
+- Dashboard: `Yes`
+- Auto-open report: `No`
+- Custom GitHub repo: `Yes`
+- Data source: `Live repo`
+- Force analysis: `No`
 
-### Full power live repo command
+Use this when:
+- you want to show honest live monitoring behavior
+- you only want the run to continue if a new SHA difference is detected
+
+If nothing changed:
+- the app tells you no changes were detected
+- it does not invent a result
+
+## 4. Full Power Live Run
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --open-report --force-analysis --repo https://github.com/openclaw/openclaw
 ```
 
-Details:
+What it uses:
 - Model: `Balanced profile`
 - Dashboard: `Yes`
 - Auto-open report: `Yes`
@@ -80,237 +80,32 @@ Details:
 - Force analysis: `Yes`
 
 Use this when:
-- you want the balanced high-quality model path
-- you want a real custom GitHub repo
-- you want the dashboard during the run
-- you want the HTML report to open automatically at the end
+- you want the strongest live presentation command
+- you want a real repo chosen on the spot
+- you want high-quality reasoning
+- you do not want the run to stop just because there were no new commits that day
 
-This is the strongest all-in-one command to show at the end when you want quality plus credibility.
-
-### Live repo check with normal change detection
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --repo https://github.com/openclaw/openclaw
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `Yes`
-- Auto-open report: `No`
-- Custom GitHub repo: `Yes`
-- Data source: `Live repo`
-- Force analysis: `No`
-
-Use this when:
-- you want honest live behavior
-- you only want the pipeline to run if a new SHA difference is detected
-
-What happens if nothing changed:
-- the app does not fake a result
-- it stops and tells you no changes were detected
-
-### Live repo check with forced analysis
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --force-analysis --repo https://github.com/openclaw/openclaw
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `Yes`
-- Auto-open report: `No`
-- Custom GitHub repo: `Yes`
-- Data source: `Live repo`
-- Force analysis: `Yes`
-
-Use this when:
-- you want to inspect a real repo even if there were no new commits today
-- you want the dashboard but do not want the browser to open automatically
-
-What happens here:
-- the app still checks the repo normally first
-- if there is no new SHA difference, it shows that forced analysis is being used
-- then it analyzes the current snapshot anyway
-
-### Recommended live judging command
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --live-demo --repo https://github.com/openclaw/openclaw
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `Yes`
-- Auto-open report: `Yes`
-- Custom GitHub repo: `Yes`
-- Data source: `Live repo`
-- Force analysis: `Yes`
-
-Use this when:
-- someone gives you a repo on the spot
-- you want the shorter shortcut version of the full-power live command
-- you want the strongest mix of credibility and presentation
-
-## 3. Quality Check Commands
-
-These commands prioritize stronger reasoning quality over speed.
-
-### Mock quality run
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --mock --dashboard
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `Yes`
-- Auto-open report: `No`
-- Custom GitHub repo: `No`
-- Data source: `Fixture-seeded`
-
-Use this when:
-- you want the balanced profile
-- you want to inspect reasoning quality
-- you do not want repo volatility to affect the run
-
-### Quality check on a custom live GitHub repo
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --repo https://github.com/openclaw/openclaw
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `Yes`
-- Auto-open report: `No`
-- Custom GitHub repo: `Yes`
-- Data source: `Live repo`
-- Force analysis: `No`
-
-Use this when:
-- you want balanced-quality reasoning on a real repo
-- you want a custom GitHub repo instead of the default fixture path
-- you want to inspect a live run honestly
-
-### Quality check on a custom repo without stopping on no-change days
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --force-analysis --repo https://github.com/openclaw/openclaw
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `Yes`
-- Auto-open report: `No`
-- Custom GitHub repo: `Yes`
-- Data source: `Live repo`
-- Force analysis: `Yes`
-
-Use this when:
-- you want balanced-quality reasoning on a real repo
-- you do not want the run to stop just because no new SHA difference was detected
-
-### Live configured-target run
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `Yes`
-- Auto-open report: `No`
-- Custom GitHub repo: `No`
-- Data source: `Configured target repos`
-
-Use this when:
-- you want the project to check the repos already listed in `main_workflow/config.py`
-- you are running the normal multi-repo workflow
-
-## 4. Headless Commands
-
-### Standard headless run
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `No`
-- Auto-open report: `No`
-- Custom GitHub repo: `No`
-
-Use this when:
-- you do not need the dashboard
-- you just want the normal terminal output
-
-### Headless custom repo run with forced analysis
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --force-analysis --repo openclaw/openclaw
-```
-
-Details:
-- Model: `Balanced profile`
-- Dashboard: `No`
-- Auto-open report: `No`
-- Custom GitHub repo: `Yes`
-- Force analysis: `Yes`
-
-Use this when:
-- you want a one-off repo check
-- you do not care about the dashboard
+This is the best command to use at the end of your presentation.
 
 ## 5. Open Reports Manually
 
-### HTML report
+HTML report:
 
 ```powershell
 start c:\Agentathon\output\latest_report.html
 ```
 
-### JSON report
+JSON report:
 
 ```powershell
 notepad c:\Agentathon\output\latest_report.json
 ```
 
-## 6. Quick Flag Meaning
+## Quick Summary
 
-| Flag | Meaning |
-| :--- | :--- |
-| `--dashboard` | Show the Rich dashboard. |
-| `--open-report` | Open the HTML report automatically after success. |
-| `--repo` | Target a specific GitHub repo. Accepts `owner/name` or full GitHub URL. |
-| `--force-analysis` | Continue even if no new SHA difference was detected. |
-| `--live-demo` | Shortcut for live presentation mode: dashboard + open report + force analysis. |
-| `--demo` | Shortcut for fast fixture demo: fast-demo + dashboard + open report. |
-| `--mock` | Use fixture data with live LLM/tool reasoning. |
-| `--fast-demo` | Use fixture-seeded context and the fast model profile. |
-
-## 7. Best Commands To Remember
-
-Fast safe demo:
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo
-```
-
-Strict live repo demo:
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --repo https://github.com/openclaw/openclaw
-```
-
-Live repo demo that will not stop on "no changes detected":
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --live-demo --repo https://github.com/openclaw/openclaw
-```
-
-Full power live repo demo:
-
-```powershell
-c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --open-report --force-analysis --repo https://github.com/openclaw/openclaw
-```
+| Command | Model | Dashboard | Custom Repo | Best Use |
+| :--- | :--- | :--- | :--- | :--- |
+| `--demo` | Fast | Yes | No | opening demo |
+| `--fast-demo --dashboard` | Fast | Yes | No | terminal-only demo |
+| `--dashboard --repo ...` | Balanced | Yes | Yes | strict live check |
+| `--dashboard --open-report --force-analysis --repo ...` | Balanced | Yes | Yes | strongest final live run |

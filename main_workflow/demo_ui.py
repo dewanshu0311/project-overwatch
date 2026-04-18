@@ -258,6 +258,75 @@ def show_final_report(
     console.rule("[dim]End of Report[/dim]", style="dim")
 
 
+def show_run_failure(
+    errors: list[str],
+    elapsed: float,
+    repo: str,
+    mode: str,
+    attempts_used: int,
+    attempt_history: Optional[list] = None,
+    report=None,
+) -> None:
+    """Show a clear final failure state when no verified report is produced."""
+    detail_lines = [f"- {error}" for error in (errors or ["Unknown validation failure"])]
+    if report is not None:
+        detail_lines.append(f"- Best draft confidence: {report.confidence_score:.2f}")
+        detail_lines.append("- Draft was not delivered, exported, or stored because verification never passed")
+    else:
+        detail_lines.append("- No parseable draft report was produced")
+
+    failure_panel = Panel(
+        Text("\n".join(detail_lines), style="white"),
+        title="[bold red]RUN FAILED VALIDATION[/bold red]",
+        border_style="red",
+        box=box.ROUNDED,
+    )
+
+    metrics_table = Table(show_header=False, box=None, padding=(0, 2))
+    metrics_table.add_column(style="dim")
+    metrics_table.add_column(style="bold")
+    metrics_table.add_row("Elapsed", f"[cyan]{elapsed:.1f}s[/cyan]")
+    metrics_table.add_row("Attempts Used", f"[white]{attempts_used}[/white]")
+    metrics_table.add_row("Repo", f"[green]{repo}[/green]")
+    metrics_table.add_row("Mode", f"[yellow]{mode}[/yellow]")
+
+    metrics_panel = Panel(
+        metrics_table,
+        title="[bold white]FAILURE METRICS[/bold white]",
+        border_style="red",
+        box=box.ROUNDED,
+    )
+
+    correction_table = Table(
+        title="Self-Correction Trace",
+        box=box.SIMPLE_HEAVY,
+        title_style="bold cyan",
+    )
+    correction_table.add_column("Attempt", style="dim", width=8)
+    correction_table.add_column("Status", style="white", width=14)
+    correction_table.add_column("Detail", style="white")
+    for entry in attempt_history or []:
+        detail = entry.get("reason", "")
+        confidence = entry.get("confidence")
+        if confidence is not None:
+            detail = f"{detail} | confidence {confidence:.2f}"
+        correction_table.add_row(
+            str(entry.get("attempt", "?")),
+            str(entry.get("status", "unknown")).replace("_", " "),
+            detail[:140],
+        )
+
+    console.print()
+    console.rule("[bold red]UNVERIFIED RUN[/bold red]", style="red")
+    console.print()
+    console.print(failure_panel)
+    console.print(metrics_panel)
+    if attempt_history:
+        console.print(correction_table)
+    console.print()
+    console.rule("[dim]End of Failure Report[/dim]", style="dim")
+
+
 def show_delivery_status(method: str, success: bool, detail: str = "") -> None:
     """Show the delivery outcome (Slack or fallback)."""
     if success:

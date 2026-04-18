@@ -348,12 +348,13 @@ def run_pipeline(
     def crew_factory(ctx):
         return _build_crew(ctx, fast=fast_demo)
 
-    report = run_with_self_correction(crew_factory, context, dashboard_callback=dashboard_cb)
-    attempts_used = dashboard_cb.get("attempts_used", 1) if dashboard_cb else 1
+    outcome = run_with_self_correction(crew_factory, context, dashboard_callback=dashboard_cb)
+    report = outcome.report
+    attempts_used = outcome.attempts_used
 
     elapsed = time.time() - start_time
 
-    if report is not None:
+    if report is not None and outcome.verified:
         delivery_result = slack_alert_tool.run(report.summary)
 
         memory_stored = False
@@ -411,6 +412,41 @@ def run_pipeline(
             pass
         except Exception as e:
             console.print(f"[yellow]HTML export failed: {e}[/yellow]")
+    elif report is not None:
+        if dashboard:
+            from .demo_ui import show_run_failure
+
+            show_run_failure(
+                outcome.last_errors,
+                elapsed,
+                repo,
+                mode,
+                attempts_used=attempts_used,
+                attempt_history=dashboard_cb.get("attempt_history", []) if dashboard_cb else [],
+                report=report,
+            )
+        else:
+            console.print("[bold red]Run failed validation after all retries.[/bold red]")
+            for error in outcome.last_errors:
+                console.print(f"[red]- {error}[/red]")
+            console.print("[yellow]Best-effort draft was not delivered, exported, or stored.[/yellow]")
+    else:
+        if dashboard:
+            from .demo_ui import show_run_failure
+
+            show_run_failure(
+                outcome.last_errors,
+                elapsed,
+                repo,
+                mode,
+                attempts_used=attempts_used,
+                attempt_history=dashboard_cb.get("attempt_history", []) if dashboard_cb else [],
+                report=None,
+            )
+        else:
+            console.print("[bold red]Run failed before producing a usable report.[/bold red]")
+            for error in outcome.last_errors:
+                console.print(f"[red]- {error}[/red]")
 
     console.print(f"Completed in {elapsed:.1f}s")
 

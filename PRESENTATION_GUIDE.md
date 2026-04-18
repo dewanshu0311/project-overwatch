@@ -51,6 +51,7 @@ c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard --open-r
 ```
 
 7. If time allows, mention the checked-in [EXAMPLE_REPORT.md](/C:/Agentathon/EXAMPLE_REPORT.md) as a compact proof of the report format and evidence quality.
+8. Keep [DEMO_RUNBOOK.md](/C:/Agentathon/DEMO_RUNBOOK.md) open for yourself if you want a short, screen-share-safe reference.
 
 ## Judge-Friendly Framing
 
