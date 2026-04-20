@@ -127,10 +127,7 @@ requirements.txt
 .env.example
 README.md
 COMMAND_GUIDE.md
-DEMO_RUNBOOK.md
-CONTEXT.md
-JUDGING_MAP.md
-PRESENTATION_GUIDE.md
+EXAMPLE_REPORT.md
 ```
 
 ## Setup
@@ -159,13 +156,13 @@ Fast demo with dashboard:
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --fast-demo --dashboard
 ```
 
-Full judge-facing demo:
+Full demo:
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --demo
 ```
 
-Live judge-facing demo on a custom repo:
+Live custom-repo demo:
 
 ```powershell
 c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --live-demo --repo https://github.com/openclaw/openclaw
@@ -197,13 +194,15 @@ c:\Agentathon\venv\Scripts\python.exe -m main_workflow.main --dashboard
 
 ## Outputs
 
-Successful runs generate:
+Verified runs generate:
 
 - `output/latest_report.html`
 - `output/latest_report.json`
 - `output/alert_fallback.md` when Slack delivery fails
 
 These outputs are runtime artifacts and are not tracked in Git.
+
+If a run fails verification after all retries, the app now shows the failure state without exporting, delivering, or storing the report as a validated result.
 
 ## Example Output Snapshot
 
@@ -217,7 +216,7 @@ Representative result from a recent run against `openai/openai-python`:
   - commit URL for the `_version.py` update
   - changelog URL tied to the same release window
 
-A checked-in example summary is available in [EXAMPLE_REPORT.md](/C:/Agentathon/EXAMPLE_REPORT.md).
+A checked-in example summary is available in [EXAMPLE_REPORT.md](EXAMPLE_REPORT.md).
 
 ## What Makes It Reliable
 
@@ -244,7 +243,7 @@ Project Overwatch goes beyond a single prompt by separating:
 
 This gives the system a more reliable reasoning chain and a visible self-correction story for demos and judging.
 
-## Demo Notes
+## Quick Demo Flow
 
 For a short live demo:
 
