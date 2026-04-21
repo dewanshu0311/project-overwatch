@@ -26,7 +26,7 @@ In practice, it is designed to help teams answer questions like:
 - Synthesizes a structured intelligence report through a 6-agent pipeline
 - Challenges weak claims with a dedicated red-team review stage
 - Verifies report quality before export or delivery
-- Exports polished HTML and machine-readable JSON outputs
+- Exports polished HTML and machine-readable JSON outputs with clickable evidence links
 - Delivers a summary to Slack or falls back to a local markdown alert
 
 ## Core Architecture
@@ -46,7 +46,7 @@ Key runtime features:
 - Groq and Firecrawl API key rotation with per-key cooldown tracking
 - ChromaDB memory for validated historical reports
 - Rich terminal dashboard for demo mode
-- HTML report export after successful runs
+- HTML report export after successful runs, including clickable cited sources and a visible analysis timestamp
 - Slack delivery with local fallback when webhook delivery fails
 
 ## System Flow

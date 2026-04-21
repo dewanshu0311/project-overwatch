@@ -28,10 +28,16 @@ def _build_html(report: IntelligenceReport, repo: str, mode: str, elapsed: float
     for i, change in enumerate(report.architecture_changes, 1):
         changes_rows += f"<tr><td>{i}</td><td>{_html_text(change)}</td></tr>\n"
 
-    # Sources rows
+    # Sources rows - clickable links so readers can verify evidence directly
     sources_rows = ""
     for i, source in enumerate(report.cited_sources, 1):
-        sources_rows += f"<tr><td>{i}</td><td>{_html_text(source)}</td></tr>\n"
+        escaped_url = escape(source)
+        sources_rows += (
+            f'<tr><td>{i}</td><td>'
+            f'<a href="{escaped_url}" target="_blank" rel="noopener" '
+            f'style="color:#38bdf8;text-decoration:none;">{_html_text(source)}</a>'
+            f'</td></tr>\n'
+        )
 
     # Confidence bar color
     conf = report.confidence_score
@@ -52,7 +58,7 @@ def _build_html(report: IntelligenceReport, repo: str, mode: str, elapsed: float
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Overwatch — Intelligence Report</title>
+    <title>Project Overwatch - Intelligence Report</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -74,6 +80,7 @@ def _build_html(report: IntelligenceReport, repo: str, mode: str, elapsed: float
             font-size: 2.4rem;
             font-weight: 700;
             background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 8px;
@@ -196,6 +203,7 @@ def _build_html(report: IntelligenceReport, repo: str, mode: str, elapsed: float
             <span class="badge badge-repo">$repo</span>
             <span class="badge badge-mode">Mode: $mode</span>
             <span class="badge badge-time">Completed in ${elapsed}s</span>
+            <span class="badge" style="background:#1e1e3a;color:#a78bfa;">Analyzed: $timestamp</span>
         </div>
 
         <div class="section">
